@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Personal Website - {% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Thêm các CSS/JS cần thiết -->
+</head>
+<body>
+    <nav>
+        <div class="container">
+            <a href="{{ url_for('index') }}">Trang chủ</a>
+            {% if 'loggedin' in session %}
+                <a href="{{ url_for('profile') }}">Profile</a>
+                <a href="{{ url_for('calendar') }}">Lịch</a>
+                <a href="{{ url_for('notes') }}">Ghi chú</a>
+                <a href="{{ url_for('logout') }}">Đăng xuất</a>
+            {% else %}
+                <a href="{{ url_for('login') }}">Đăng nhập</a>
+                <a href="{{ url_for('register') }}">Đăng ký</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="container">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

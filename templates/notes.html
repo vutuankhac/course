@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Ghi chú cá nhân{% endblock %}
+
+{% block content %}
+<h1>Ghi chú cá nhân</h1>
+
+<h2>Thêm ghi chú mới</h2>
+<form method="POST" action="/add_note">
+    <div class="form-group">
+        <label for="title">Tiêu đề:</label>
+        <input type="text" id="title" name="title" required>
+    </div>
+    <div class="form-group">
+        <label for="content">Nội dung:</label>
+        <textarea id="content" name="content" rows="4" required></textarea>
+    </div>
+    <button type="submit">Lưu ghi chú</button>
+</form>
+
+<!-- Hiển thị các ghi chú -->
+<h2>Ghi chú của bạn</h2>
+<div class="notes-list">
+    {% for note in notes %}
+    <div class="note">
+        <h3>{{ note[2] }}</h3>
+        <p>{{ note[3] }}</p>
+        <small>{{ note[4] }}</small>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

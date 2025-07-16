@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Lịch cá nhân{% endblock %}
+
+{% block content %}
+<h1>Lịch cá nhân</h1>
+
+<div id="calendar"></div>
+
+<h2>Thêm sự kiện mới</h2>
+<form method="POST" action="/add_event">
+    <div class="form-group">
+        <label for="title">Tiêu đề:</label>
+        <input type="text" id="title" name="title" required>
+    </div>
+    <div class="form-group">
+        <label for="start">Bắt đầu:</label>
+        <input type="datetime-local" id="start" name="start" required>
+    </div>
+    <div class="form-group">
+        <label for="end">Kết thúc:</label>
+        <input type="datetime-local" id="end" name="end">
+    </div>
+    <button type="submit">Thêm sự kiện</button>
+</form>
+
+<!-- Hiển thị các sự kiện -->
+<h2>Sự kiện của bạn</h2>
+<ul>
+    {% for event in events %}
+    <li>
+        <strong>{{ event[2] }}</strong> -
+        Từ {{ event[3] }} đến {{ event[4] if event[4] else 'không xác định' }}
+    </li>
+    {% endfor %}
+</ul>
+
+<!-- Thêm thư viện FullCalendar -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            events: [
+                {% for event in events %}
+                {
+                    title: '{{ event[2] }}',
+                    start: '{{ event[3] }}',
+                    {% if event[4] %}end: '{{ event[4] }}',{% endif %}
+                },
+                {% endfor %}
+            ]
+        });
+        calendar.render();
+    });
+</script>
+{% endblock %}
