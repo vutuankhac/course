@@ -27,17 +27,27 @@ def login():
 
         cursor = mysql.connection.cursor()
         cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
-        user = cursor.fetchone()
+        colums = [col[0] for col in cursor.description]
+        user_row = cursor.fetchone()
         cursor.close()
 
-        if user and bcrypt.checkpw(password, user[3].encode('utf-8')):
-            session['loggedin'] = True
-            session['userid'] = user[0]
-            session['username'] = user[1]
-            session['email'] = user[2]
-            return redirect(url_for('index'))
+        if user_row:
+            user = dict(zip(colums, user_row))
         else:
-            flash("Email hoặc mật khẩu không đúng!")
+            user = None
+
+        try:
+            if user and bcrypt.checkpw(password, user.get("password").encode('utf-8')):
+                session['loggedin'] = True
+                session['userid'] = user["userid"]
+                session['username'] = user["username"]
+                session['email'] = user["email"]
+                return redirect(url_for('index'))
+            else:
+                flash("Email hoặc mật khẩu không đúng!")
+        except Exception as e:
+            print("Lỗi ở đây là:", e)
+            flash("Email của bạn không đúng!")
 
     return render_template('auth/login.html')
 
