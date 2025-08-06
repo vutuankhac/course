@@ -7,3 +7,6 @@ class Config:
     MYSQL_PASSWORD = ''
     # MYSQL_DB = 'personal_website'
     MYSQL_DB = 'test'
+
+class Hieu:
+    hobbies = ("an", "ngu", "nghi", "choi")
