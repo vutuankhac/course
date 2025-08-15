@@ -39,7 +39,7 @@ def login():
         try:
             if user and bcrypt.checkpw(password, user.get("password").encode('utf-8')):
                 session['loggedin'] = True
-                session['userid'] = user["userid"]
+                session['userid'] = user["id"]
                 session['username'] = user["username"]
                 session['email'] = user["email"]
                 return redirect(url_for('index'))
@@ -148,6 +148,50 @@ def add_note():
 
         flash("Ghi chú đã được thêm!")
     return redirect(url_for('notes'))
+
+
+# Schedules Routes
+@app.route('/schedule/create', methods=['GET', 'POST'])
+def schedule_create():
+    if 'loggedin' in session:
+        if request.method == 'POST':
+            tenHoatDong = request.form['tenHoatDong']
+            thuTrongTuan = request.form['thuTrongTuan']
+            thoiGianBatDau = request.form['thoiGianBatDau']
+            thoiGianKetThuc = request.form['thoiGianKetThuc']
+            user_id = session['userid']
+
+            try:
+                cursor = mysql.connection.cursor()
+
+                # Câu lệnh SQL với tham số parameterized để tránh SQL injection
+                query = """
+                INSERT INTO schedules
+                (activity_name, day_of_week, start_time, end_time, user_id)
+                VALUES (%s, %s, %s, %s, %s)
+                """
+
+                # Thực thi câu lệnh với các giá trị từ form
+                cursor.execute(query,
+                               (tenHoatDong, thuTrongTuan, thoiGianBatDau, thoiGianKetThuc, user_id))
+
+                # Commit thay đổi vào database
+                mysql.connection.commit()
+
+                # Đóng cursor
+                cursor.close()
+
+                flash('Thêm hoạt động thành công!', 'success')
+                return redirect(url_for('index'))
+
+            except Exception as e:
+                # Xử lý lỗi nếu có
+                mysql.connection.rollback()
+                flash(f'Có lỗi xảy ra: {str(e)}', 'error')
+                return redirect(url_for('index'))
+
+        return render_template('schedules/create.html')
+    return redirect(url_for('login'))
 
 
 if __name__ == '__main__':
