@@ -1,7 +1,9 @@
+import MySQLdb
+import bcrypt
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_mysqldb import MySQL
+
 from config import Config
-import bcrypt
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -182,7 +184,7 @@ def schedule_create():
                 cursor.close()
 
                 flash('Thêm hoạt động thành công!', 'success')
-                return redirect(url_for('index'))
+                return redirect(url_for('schedule_list'))
 
             except Exception as e:
                 # Xử lý lỗi nếu có
@@ -191,6 +193,120 @@ def schedule_create():
                 return redirect(url_for('index'))
 
         return render_template('schedules/create.html')
+    return redirect(url_for('login'))
+
+
+@app.route('/schedule/list', methods=['GET'])
+def schedule_list():
+    if 'loggedin' in session:
+        # Lấy user_id từ session
+        user_id = session['userid']
+
+        # Kết nối database và lấy dữ liệu
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+        # Query lấy tất cả schedule của user hiện tại
+        query = """
+            SELECT * FROM schedules 
+            WHERE user_id = %s
+            ORDER BY start_time ASC
+        """
+
+        cursor.execute(query, (user_id,))
+        schedules = cursor.fetchall()
+
+        # Đóng kết nối
+        cursor.close()
+
+        print("schedules", schedules)
+        # Truyền dữ liệu vào template
+        return render_template('schedules/list.html', schedules=schedules)
+
+    return redirect(url_for('login'))
+
+
+@app.route('/schedule/edit', methods=['GET', 'POST'])
+def schedule_edit():
+    if 'loggedin' in session:
+        if request.method == 'POST':
+            tenHoatDong = request.form['tenHoatDong']
+            thuTrongTuan = request.form['thuTrongTuan']
+            thoiGianBatDau = request.form['thoiGianBatDau']
+            thoiGianKetThuc = request.form['thoiGianKetThuc']
+            schedule_id = request.form['schedule_id']
+            user_id = session['userid']
+
+            try:
+                cursor = mysql.connection.cursor()
+
+                # Câu lệnh SQL với tham số parameterized để tránh SQL injection
+                query = """
+                    UPDATE schedules
+                    SET activity_name = %s,
+                        day_of_week = %s,
+                        start_time = %s,
+                        end_time = %s,
+                        user_id = %s
+                    WHERE schedule_id = %s
+                """
+
+                # Thực thi câu lệnh với các giá trị từ form
+                cursor.execute(query, (
+                    tenHoatDong,
+                    thuTrongTuan,
+                    thoiGianBatDau,
+                    thoiGianKetThuc,
+                    user_id,
+                    schedule_id  # Thêm schedule_id vào cuối
+                ))
+
+                # Commit thay đổi vào database
+                mysql.connection.commit()
+
+                # Đóng cursor
+                cursor.close()
+
+                flash('Cập nhật hoạt động thành công!', 'success')
+                return redirect(url_for('schedule_list'))
+
+            except Exception as e:
+                # Xử lý lỗi nếu có
+                mysql.connection.rollback()
+                flash(f'Có lỗi xảy ra: {str(e)}', 'error')
+                return redirect(url_for('index'))
+
+        user_id = session['userid']
+        schedule_id = request.args.get('schedule_id', default='', type=str)
+        # Kết nối database và lấy dữ liệu
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+        # Query lấy tất cả schedule của user hiện tại
+        query = """
+            SELECT * FROM schedules 
+            WHERE user_id = %s AND schedule_id = %s
+            ORDER BY start_time ASC
+        """
+
+        cursor.execute(query, (user_id, schedule_id))
+        schedule = cursor.fetchone()
+
+        return render_template('schedules/edit.html', schedule=schedule)
+    return redirect(url_for('login'))
+
+
+@app.route('/schedule/delete/<int:schedule_id>', methods=['GET'])
+def schedule_delete(schedule_id):
+    if 'loggedin' in session:
+        user_id = session['userid']
+
+        cursor = mysql.connection.cursor()
+        query = "DELETE FROM schedules WHERE schedule_id = %s AND user_id = %s"
+        cursor.execute(query, (schedule_id, user_id))
+        mysql.connection.commit()
+        cursor.close()
+
+        return redirect(url_for('schedule_list'))
+
     return redirect(url_for('login'))
 
 
