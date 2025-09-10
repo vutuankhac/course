@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balloon Game</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+
+        .game-container {
+            text-align: center;
+        }
+
+        canvas {
+            border: 2px solid #333;
+            background-color: #fff;
+        }
+
+        .instructions {
+            margin-top: 20px;
+            color: #555;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container" id="game-container">
+        <h1>Balloon Game</h1>
+        <canvas id="gameCanvas"></canvas>
+        <div class="instructions">
+            <p>Sử dụng phím ← → hoặc A D để di chuyển thanh chắn</p>
+            <p>Ngăn không cho bóng chạm đáy màn hình!</p>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/game.js') }}"></script>
+</body>
+</html>

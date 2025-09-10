@@ -310,5 +310,9 @@ def schedule_delete(schedule_id):
     return redirect(url_for('login'))
 
 
+@app.route('/game')
+def game():
+    return render_template('game/index.html')
+
 if __name__ == '__main__':
     app.run(port=5001, debug=True)
