@@ -174,24 +174,24 @@ class BalloonGame {
             this.ctx.fillText('Nhấn R để chơi lại', this.canvas.width / 2, this.canvas.height / 2 + 100);
             this.ctx.textAlign = 'left';
             // Khi kết thúc màn chơi
-            public void completeLevel(int levelNumber) {
-                int baseScore = calculateBaseScore();
-                int timeBonus = calculateTimeBonus();
-                int stars = evaluatePerformance();
-
-                LevelResult result = new LevelResult(
-                    levelNumber,
-                    baseScore + timeBonus,
-                    stars,
-                    getLevelTime()
-                );
-
-                // Lưu kết quả
-                scoreManager.saveLevelResult(result);
-
-                // Hiển thị thông báo
-                showCompletionScreen(result);
-            }
+//            completeLevel(int levelNumber) {
+//                int baseScore = calculateBaseScore();
+//                int timeBonus = calculateTimeBonus();
+//                int stars = evaluatePerformance();
+//
+//                LevelResult result = new LevelResult(
+//                    levelNumber,
+//                    baseScore + timeBonus,
+//                    stars,
+//                    getLevelTime()
+//                );
+//
+//                // Lưu kết quả
+//                scoreManager.saveLevelResult(result);
+//
+//                // Hiển thị thông báo
+//                showCompletionScreen(result);
+//            }
         }
     }
 
