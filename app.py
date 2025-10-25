@@ -316,3 +316,74 @@ def game():
 
 if __name__ == '__main__':
     app.run(port=5001, debug=True)
+
+@app.route('/game/score', methods=['GET', 'POST'])
+def game_score():
+    if 'loggedin' in session:
+        if request.method == 'POST':
+            diemSo = request.form['diemSo']
+            user_id = session['userid']
+
+            try:
+                cursor = mysql.connection.cursor()
+
+                # Câu lệnh SQL với tham số parameterized để tránh SQL injection
+                query = """
+                            SELECT * FROM score_game 
+                            WHERE user_id = %s
+                        """
+
+                cursor.execute(query, (user_id))
+                score_game_record = cursor.fetchone()
+
+                if score_game_record:
+                    # Câu lệnh SQL với tham số parameterized để tránh SQL injection
+                    query = """
+                        UPDATE score_game
+                        SET score = %s,
+                            updated_date = now()
+                        WHERE user_id = %s
+                    """
+
+                    # Thực thi câu lệnh với các giá trị từ form
+                    cursor.execute(query, (
+                        tenHoatDong,
+                        thuTrongTuan,
+                        thoiGianBatDau,
+                        thoiGianKetThuc,
+                        user_id,
+                        schedule_id  # Thêm schedule_id vào cuối
+                    ))
+
+                # Commit thay đổi vào database
+                mysql.connection.commit()
+
+                # Đóng cursor
+                cursor.close()
+
+                flash('Cập nhật hoạt động thành công!', 'success')
+                return redirect(url_for('schedule_list'))
+
+            except Exception as e:
+                # Xử lý lỗi nếu có
+                mysql.connection.rollback()
+                flash(f'Có lỗi xảy ra: {str(e)}', 'error')
+                return redirect(url_for('index'))
+
+        user_id = session['userid']
+        schedule_id = request.args.get('schedule_id', default='', type=str)
+        # Kết nối database và lấy dữ liệu
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+        # Query lấy tất cả schedule của user hiện tại
+        query = """
+            SELECT * FROM schedules 
+            WHERE user_id = %s AND schedule_id = %s
+            ORDER BY start_time ASC
+        """
+
+        cursor.execute(query, (user_id, schedule_id))
+        schedule = cursor.fetchone()
+
+        return render_template('schedules/edit.html', schedule=schedule)
+    return redirect(url_for('login'))

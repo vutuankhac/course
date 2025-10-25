@@ -34,6 +34,11 @@ class BalloonGame {
         this.keys = {};
         window.addEventListener('keydown', (e) => {
             this.keys[e.key] = true;
+
+            // Xử lý phím R để restart
+            if ((e.key === 'r' || e.key === 'R') && this.gameOver) {
+                this.restart();
+            }
         });
 
         window.addEventListener('keyup', (e) => {
@@ -44,6 +49,26 @@ class BalloonGame {
         this.gameLoop();
     }
 
+    restart() {
+        // Reset tất cả các thuộc tính về trạng thái ban đầu
+        this.balloon.x = this.canvas.width / 2;
+        this.balloon.y = this.canvas.height / 2;
+        this.balloon.speedX = 3;
+        this.balloon.speedY = 3;
+
+        this.paddle.x = this.canvas.width / 2 - 50;
+
+        this.score = 0;
+        this.gameOver = false;
+        this.lastTime = Date.now();
+        this.lastScoreTime = Date.now();
+
+        // Bắt đầu lại game loop
+        if (!this.gameLoopId) {
+            this.gameLoop();
+        }
+    }
+
     update() {
         if (this.gameOver) return;
 
@@ -52,13 +77,20 @@ class BalloonGame {
         this.balloon.y += this.balloon.speedY;
 
         // Kiểm tra va chạm với tường
-        if (this.balloon.x - this.balloon.radius < 0 ||
-            this.balloon.x + this.balloon.radius > this.canvas.width) {
+        if (this.balloon.x - this.balloon.radius < 0) {
             this.balloon.speedX = -this.balloon.speedX;
+            this.balloon.x = this.balloon.radius; // Đảm bảo bóng không đi ra ngoài tường
+            this.score += 1;
+        } else if (this.balloon.x + this.balloon.radius > this.canvas.width) {
+            this.balloon.speedX = -this.balloon.speedX;
+            this.balloon.x = this.canvas.width - this.balloon.radius; // Đảm bảo bóng không đi ra ngoài tường
+            this.score += 1;
         }
 
         if (this.balloon.y - this.balloon.radius < 0) {
             this.balloon.speedY = -this.balloon.speedY;
+            this.balloon.y = this.balloon.radius; // Đảm bảo bóng không đi ra ngoài tường
+            this.score += 1;
         }
 
         // Kiểm tra va chạm với đáy (game over)
@@ -70,11 +102,13 @@ class BalloonGame {
         // Kiểm tra va chạm với paddle
         if (this.balloon.y + this.balloon.radius > this.paddle.y &&
             this.balloon.x > this.paddle.x &&
-            this.balloon.x < this.paddle.x + this.paddle.width) {
+            this.balloon.x < this.paddle.x + this.paddle.width &&
+            this.balloon.speedY > 0) {
             this.balloon.speedY = -this.balloon.speedY;
             // Điều chỉnh hướng bóng dựa trên vị trí va chạm với paddle
             const hitPos = (this.balloon.x - (this.paddle.x + this.paddle.width / 2)) / (this.paddle.width / 2);
             this.balloon.speedX = hitPos * 5;
+            this.score += 1;
         }
 
         // Di chuyển paddle
@@ -89,13 +123,6 @@ class BalloonGame {
                 this.paddle.x = this.canvas.width - this.paddle.width;
             }
         }
-
-        // Cập nhật điểm số mỗi giây
-        const currentTime = Date.now();
-        if (currentTime - this.lastScoreTime > this.scoreInterval) {
-            this.score += 1;
-            this.lastScoreTime = currentTime;
-        }
     }
 
     draw() {
@@ -105,6 +132,9 @@ class BalloonGame {
         // Vẽ balloon
         this.ctx.beginPath();
         this.ctx.arc(this.balloon.x, this.balloon.y, this.balloon.radius, 0, Math.PI * 2);
+        this.ctx.strokeStyle = "black";  // Đặt màu stroke là đen
+        this.ctx.lineWidth = 2;          // Đặt độ dày của đường viền (tuỳ chọn)
+        this.ctx.stroke();               // Vẽ đường viền
         this.ctx.fillStyle = this.balloon.color;
         this.ctx.fill();
         this.ctx.closePath();
@@ -129,16 +159,48 @@ class BalloonGame {
             this.ctx.fillText('GAME OVER', this.canvas.width / 2, this.canvas.height / 2);
             this.ctx.font = '20px Arial';
             this.ctx.fillText(`Điểm cuối cùng: ${this.score}`, this.canvas.width / 2, this.canvas.height / 2 + 50);
+            this.ctx.fillText('Nhấn R để chơi lại', this.canvas.width / 2, this.canvas.height / 2 + 100);
             this.ctx.textAlign = 'left';
+            // Khi kết thúc màn chơi
+            public void completeLevel(int levelNumber) {
+                int baseScore = calculateBaseScore();
+                int timeBonus = calculateTimeBonus();
+                int stars = evaluatePerformance();
+
+                LevelResult result = new LevelResult(
+                    levelNumber,
+                    baseScore + timeBonus,
+                    stars,
+                    getLevelTime()
+                );
+
+                // Lưu kết quả
+                scoreManager.saveLevelResult(result);
+
+                // Hiển thị thông báo
+                showCompletionScreen(result);
+            }
         }
     }
 
     gameLoop() {
-        this.update();
+        // Code cập nhật và vẽ game
+        const currentTime = Date.now();
+        const deltaTime = currentTime - this.lastTime;
+        this.lastTime = currentTime;
+
+        this.update(deltaTime);
         this.draw();
-        requestAnimationFrame(() => this.gameLoop());
+
+        if (!this.gameOver) {
+            this.gameLoopId = requestAnimationFrame(() => this.gameLoop());
+        } else {
+            this.gameLoopId = null;
+        }
     }
 }
 
 // Khởi tạo game khi trang được tải
-new BalloonGame();
+window.addEventListener('load', () => {
+    new BalloonGame();
+});
