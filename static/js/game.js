@@ -24,7 +24,7 @@ class BalloonGame {
             speed: 8
         };
 
-        this.score = 0;
+        this.score = '';
         this.gameOver = false;
         this.lastTime = Date.now();
         this.scoreInterval = 1000; // 1 giây
@@ -44,6 +44,18 @@ class BalloonGame {
         window.addEventListener('keyup', (e) => {
             this.keys[e.key] = false;
         });
+
+        // Sử dụng hàm
+        const userId = 1; // Thay bằng user_id thực tế
+        this.getGameScore(userId)
+        .then(scoreData => {
+            if (scoreData) {
+                console.log('Game score:', scoreData);
+                this.score = scoreData.score;
+                // Xử lý dữ liệu điểm số ở đây
+                //displayScore(scoreData);
+            }
+        })
 
         // Bắt đầu game loop
         this.gameLoop();
@@ -182,6 +194,29 @@ class BalloonGame {
             }
         }
     }
+
+    // Hàm lấy điểm số từ backend Flask
+    async getGameScore(userId) {
+        try {
+            const response = await fetch(`http://localhost:5001/game/score?user_id=${userId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error fetching game score:', error);
+            return null;
+        }
+    }
+
 
     gameLoop() {
         // Code cập nhật và vẽ game

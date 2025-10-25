@@ -1,12 +1,15 @@
 import MySQLdb
 import bcrypt
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_mysqldb import MySQL
+from flask_cors import CORS
 
 from config import Config
 
 app = Flask(__name__)
 app.config.from_object(Config)
+
+CORS(app)
 
 # MySQL Configuration
 mysql = MySQL(app)
@@ -313,6 +316,91 @@ def schedule_delete(schedule_id):
 @app.route('/game')
 def game():
     return render_template('game/index.html')
+
+@app.route('/game/score', methods=['GET', 'POST'])
+def game_score():
+    # if 'loggedin' in session:
+    if request.method == 'POST':
+        diemSo = request.args.get('diemSo')
+        user_id = request.args.get('user_id') #session['userid']
+
+        try:
+            cursor = mysql.connection.cursor()
+
+            query = """ SELECT * FROM score_game WHERE user_id = %s """
+
+            cursor.execute(query, (user_id,))
+            score_game_record = cursor.fetchone()
+
+            if score_game_record:
+
+                # Câu lệnh SQL với tham số parameterized để tránh SQL injection
+                query = """
+                    UPDATE score_game
+                    SET score = %s,
+                        updated_date = now()
+                    WHERE user_id = %s
+                """
+
+                # Thực thi câu lệnh với các giá trị từ form
+                cursor.execute(query, (
+                    diemSo,
+                    user_id,
+                ))
+            else:
+                # Câu lệnh SQL với tham số parameterized để tránh SQL injection
+                query = """
+                        Insert into score_game(user_id, score, created_date) VALUES(%s, %s, now())
+                    """
+
+                # Thực thi câu lệnh với các giá trị từ form
+                cursor.execute(query, (
+                    user_id,
+                    diemSo
+                ))
+
+            # Commit thay đổi vào database
+            mysql.connection.commit()
+
+            # Đóng cursor
+            cursor.close()
+
+            data = {
+                'user_id': user_id,
+                'score': diemSo
+            }
+            return jsonify(data)
+
+        except Exception as e:
+            # Xử lý lỗi nếu có
+            mysql.connection.rollback()
+            flash(f'Có lỗi xảy ra: {str(e)}', 'error')
+            return redirect(url_for('index'))
+    else:
+        user_id = request.args.get('user_id') #session['userid']
+
+        # Kết nối database và lấy dữ liệu
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+        query = """ SELECT * FROM score_game WHERE user_id = %s """
+        try:
+            cursor.execute(query, (user_id,))
+            score_game_record = cursor.fetchone()
+            if score_game_record:
+                data = {
+                    'user_id': user_id,
+                    'score': score_game_record['score']
+                }
+                return jsonify(data)
+            else:
+                data = {
+                    'user_id': user_id,
+                    'score': 0
+                }
+                return jsonify(data)
+        except Exception as e:
+            print (e)
+    return redirect(url_for('login'))
 
 if __name__ == '__main__':
     app.run(port=5001, debug=True)
